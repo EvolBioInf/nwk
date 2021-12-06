@@ -51,7 +51,10 @@ func (v *Node) RemoveChild(c *Node) error {
 		return errors.New("no children")
 	}
 	if v.Child.Id == c.Id {
+		w := v.Child
 		v.Child = v.Child.Sib
+		w.Sib = nil
+		w.Parent = nil
 		return nil
 	}
 	w := v.Child
@@ -61,7 +64,10 @@ func (v *Node) RemoveChild(c *Node) error {
 	if w.Sib == nil {
 		return errors.New("child not found")
 	} else {
+		x := w.Sib
 		w.Sib = w.Sib.Sib
+		x.Sib = nil
+		x.Parent = nil
 	}
 	return nil
 }

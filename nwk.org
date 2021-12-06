@@ -169,16 +169,22 @@
   }
 #+end_src
 #+begin_src latex
-  If the first child node is to be removed, it is reset to its sibling.
+  If the first child node is to be removed, it is reset to its sibling
+  and the sibling is detached from the tree.
 #+end_src
 #+begin_src go <<Remove first child?>>=
   if v.Child.Id == c.Id {
+	  w := v.Child
 	  v.Child = v.Child.Sib
+	  w.Sib = nil
+	  w.Parent = nil
 	  return nil
   }
 #+end_src
 #+begin_src latex
-  If the removable child is among the siblings, a sibling link is reset.
+  If the removable child is among the siblings, the corresponding sibling
+  link is reset, and the excluded sibling is detached from the rest of
+  the tree.
 #+end_src
 #+begin_src go <<Remove a sibling?>>=
   w := v.Child
@@ -188,7 +194,10 @@
   if w.Sib == nil {
 	  return errors.New("child not found")
   } else {
+	  x := w.Sib
 	  w.Sib = w.Sib.Sib
+	  x.Sib = nil
+	  x.Parent = nil
   }
 #+end_src
 #+begin_src latex
