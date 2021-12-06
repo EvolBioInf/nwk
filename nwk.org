@@ -242,7 +242,7 @@
   ! and one of its ancestors.
 #+end_src
 #+begin_src go <<Methods>>=
-  func (v *Node) UpDistance(w *Node) (float64, error) {
+  func (v *Node) UpDistance(w *Node) float64 {
 	  s := 0.0
 	  x := v
 	  for x != nil && x.Id != w.Id {
@@ -253,14 +253,13 @@
   }
 #+end_src
 #+begin_src latex
-  If the ancestor wasn't found, we throw an error.
+  If the ancestor wasn't found, we abort with message.
 #+end_src
 #+begin_src go <<Return distance>>=
   if x == nil {
-	  return 0.0, errors.New("Ancestor not found.")
-  } else {
-	  return s, nil
+	  log.Fatal("can't find ancestor")
   }
+  return s
 #+end_src
 #+begin_src latex
   We import \ty{errors}.

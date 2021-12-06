@@ -78,7 +78,7 @@ func (v *Node) LCA(w *Node) *Node {
 }
 
 //  The method UpDistance returns the distance between the node  and one of its ancestors.
-func (v *Node) UpDistance(w *Node) (float64, error) {
+func (v *Node) UpDistance(w *Node) float64 {
 	s := 0.0
 	x := v
 	for x != nil && x.Id != w.Id {
@@ -86,10 +86,9 @@ func (v *Node) UpDistance(w *Node) (float64, error) {
 		x = x.Parent
 	}
 	if x == nil {
-		return 0.0, errors.New("Ancestor not found.")
-	} else {
-		return s, nil
+		log.Fatal("can't find ancestor")
 	}
+	return s
 }
 
 //  The method UniformLabels labels all nodes in the subtree with  a prefix followed by the node ID.

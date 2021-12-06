@@ -40,10 +40,7 @@ func TestNewick(t *testing.T) {
 		t.Errorf("get:\n%d\nwant:\n%d",
 			l1.Id, 11)
 	}
-	ud, err := n1.UpDistance(root)
-	if err != nil {
-		t.Errorf("%s", err.Error())
-	}
+	ud := n1.UpDistance(root)
 	if ud != 0.8 {
 		t.Errorf("get:\n%g\nwant:\n%g", ud, 0.8)
 	}

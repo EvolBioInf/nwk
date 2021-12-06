@@ -89,10 +89,7 @@
   We measure the \ty{UpDistance} between n13 and the root.
 #+end_src
 #+begin_src go <<Testing>>=
-  ud, err := n1.UpDistance(root)
-  if err != nil {
-	  t.Errorf("%s", err.Error())
-  }
+  ud := n1.UpDistance(root)
   if ud != 0.8 {
 	  t.Errorf("get:\n%g\nwant:\n%g", ud, 0.8)
   }
