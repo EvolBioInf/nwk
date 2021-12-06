@@ -1,0 +1,9 @@
+doc/*.aux
+doc/*.dvi
+doc/*.log
+doc/*.pdf
+doc/*.toc
+doc/*.bbl
+doc/*.blg
+doc/nwk_test.tex
+doc/nwk.tex

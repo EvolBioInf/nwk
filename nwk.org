@@ -1,0 +1,714 @@
+#+begin_src latex
+  \section{Introduction}
+  Phylogenies are trees, which are often written using nested
+  parentheses~\cite[p.312]{knu97:ar1}. For example,
+  \[
+  (A(B)(C(D)(E)))
+  \] 
+  corresponds to the tree
+  \begin{center}
+    \pstree[levelsep=1cm]{\Toval{A}}{
+      \Toval{B}
+      \pstree{\Toval{C}}{
+	\Toval{D}
+	\Toval{E}
+      }
+    }
+  \end{center}
+  Each node has a name and all branches have the same
+  length. Phylogenies are often written in a specialized parenthesis
+  notation, the Newick
+  format\footnote{\ty{evolution.genetics.washington.edu/phylip/newick\_doc.html}}. In
+  Newick format, the tree above is
+  \[
+  (B,(D,E)C)A;
+  \]
+  Now only internal nodes are delimited by parentheses and the tree is
+  terminated by a semicolon, while subtrees are separated by
+  commas. Phylogenies typically only contain leaf labels, interpreted as
+  extant species, while the internal nodes, the common ancestors usually
+  remain anonymous. That would be
+  \[
+  (B,(D,E));
+  \]
+
+  In addition to the topology of a phylogeny, its branch lengths are
+  meaningful. In Newick format, branch lengths are delimited by colons,
+  for example
+  \[
+  (B:1,(D:1,E:1));
+  \]
+
+  We can summarize the Newick format as a set of rules, where items that
+  appear at most once are written in square brackets, items that appear
+  between zero and many times in curly brackets:
+  \begin{center}
+    \begin{tabular}{rcl}
+      tree & $\rightarrow$ & children[label][:length];\\
+      children & $\rightarrow$ & (child\{,child\})\\
+      child & $\rightarrow$ & children[label][:length]\\
+      & $\rightarrow$ & label[:length]\\
+      label & $\rightarrow$ & unquotedLabel\\
+      & $\rightarrow$ & quotedLabel\\
+      unquotedLabel & $\rightarrow$ & printingCharacters\\
+      quotedLable & $\rightarrow$ & 'printingCharacters'\\
+      length & $\rightarrow$ & signedNumber\\
+      & $\rightarrow$ & unsignedNumber
+    \end{tabular}
+  \end{center}
+
+  There are a few additional stipulations:
+  \begin{itemize}
+  \item Comments are enclosed in square brackets.
+  \item White space is ignored everywhere except in quoted labels.
+  \item Single quote characters in a quoted label are denoted by two
+    single quotes.
+  \item Underscores in unquoted labels are converted to blanks.
+  \end{itemize}
+
+  Our implementation consists of a scanner that returns phylogenies in
+  Go notation. It is based on a scanner for the Go language contained in
+  the package
+  \[
+  \ty{text/scanner}
+  \]
+#+end_src
+#+begin_src latex
+  \section{Implementation}
+  !Package \ty{nwk} implements data structures, methods, and functions
+  !to manipulate phylogenies in Newick format.
+
+  The outline of the \ty{nwk} package contains hooks for imports, types,
+  variables, methods, and functions.
+#+end_src
+#+begin_src go <<nwk.go>>=
+  package nwk
+
+  import (
+	  //<<Imports>>
+  )
+  //<<Types>>
+  //<<Variables>>
+  //<<Methods>>
+  //<<Functions>>
+#+end_src
+
+#+begin_src latex
+  \subsection{Data Structure \ty{Node}}
+  !A \ty{Node} is the basic uni of a Newick tree.
+  It holds an Id, references to parent, child, and sibling, a label,
+  a branch length, and an indicator whether it does have a branch
+  length. The indicator distinguishes the default length of zero from a
+  genuine branch length. There is also a hook for adding further fields.
+#+end_src
+#+begin_src go <<Types>>=
+  type Node struct {
+	  Id int
+	  Child, Sib, Parent *Node
+	  Label string
+	  Length float64
+	  HasLength bool
+	  //<<Node fields>>
+  }
+#+end_src
+#+begin_src latex
+  \subsubsection{Function \ty{NewNode}}
+  !\ty{NewNode} returns a new node with a unique Id.
+#+end_src
+#+begin_src go <<Functions>>=
+  func NewNode() *Node {
+	  n := new(Node)
+	  n.Id = nodeId
+	  nodeId++
+	  return n
+  }
+#+end_src
+#+begin_src latex
+  The variable \ty{nodeId} is global and initialized to 1.
+#+end_src
+#+begin_src go <<Variables>>=
+  var nodeId = 1
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{AddChild}}
+  !Method \ty{AddChild} adds a child node to a \ty{Node}.  Inside
+  \texttt{AddChild}, we set the parent link. The child is either
+  assigned to the \texttt{Child} link added to the sibling list.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (n *Node) AddChild(v *Node) {
+	  v.Parent = n
+	  if n.Child == nil {
+		  n.Child = v
+	  } else {
+		  //<<Scan sibling list>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We walk along the sibling list and extend it by the new node.
+#+end_src
+#+begin_src go <<Scan sibling list>>=
+  w := n.Child
+  for w.Sib != nil {
+	  w = w.Sib
+  }
+  w.Sib = v
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{RemoveChild}}
+  ! The method \ty{RemoveChild} removes a direct child node, if
+  ! present. If not, it returns an error.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (v *Node) RemoveChild(c *Node) error {
+	  if v.Child == nil { return errors.New("no children") }
+	  //<<Remove first child?>>
+	  //<<Remove a sibling?>>
+	  return nil
+  }
+#+end_src
+#+begin_src latex
+  If the first child node is to be removed, it is reset to its sibling.
+#+end_src
+#+begin_src go <<Remove first child?>>=
+  if v.Child.Id == c.Id {
+	  v.Child = v.Child.Sib
+	  return nil
+  }
+#+end_src
+#+begin_src latex
+  If the removable child is among the siblings, a sibling link is reset.
+#+end_src
+#+begin_src go <<Remove a sibling?>>=
+  w := v.Child
+  for w.Sib != nil && w.Sib.Id != c.Id {
+	  w = w.Sib
+  }
+  if w.Sib == nil {
+	  return errors.New("child not found")
+  } else {
+	  w.Sib = w.Sib.Sib
+  }
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{LCA}}
+  !The method \ty{LCA} returns the lowest common ancestor of two nodes
+  !or nil, if none could be found.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (v *Node) LCA(w *Node) *Node {
+	  clearPath(v)
+	  clearPath(w)
+	  markPath(v)
+	  for w != nil && !w.marked {
+		  w = w.Parent
+	  }
+	  return w
+  }
+#+end_src
+#+begin_src latex
+  In \ty{clearPath} we remove the marks along the path from a node to
+  the root.
+#+end_src
+#+begin_src go <<Functions>>=
+  func clearPath(v *Node) {
+	  for v != nil {
+		  v.marked = false
+		  v = v.Parent
+	  }
+  }
+#+end_src
+#+begin_src latex
+  In \ty{markPath} we mark the path from the node to the root.
+#+end_src
+#+begin_src go <<Functions>>=
+  func markPath(v *Node) {
+	  for v != nil {
+		  v.marked = true
+		  v = v.Parent
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We add the node field \ty{marked}.
+#+end_src
+#+begin_src go <<Node fields>>=
+  marked bool
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{UpDistance}}
+  ! The method \ty{UpDistance} returns the distance between the node
+  ! and one of its ancestors.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (v *Node) UpDistance(w *Node) (float64, error) {
+	  s := 0.0
+	  x := v
+	  for x != nil && x.Id != w.Id {
+		  s += x.Length
+		  x = x.Parent
+	  }
+	  //<<Return distance>>
+  }
+#+end_src
+#+begin_src latex
+  If the ancestor wasn't found, we throw an error.
+#+end_src
+#+begin_src go <<Return distance>>=
+  if x == nil {
+	  return 0.0, errors.New("Ancestor not found.")
+  } else {
+	  return s, nil
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{errors}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "errors"
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{UniformLabels}}
+  ! The method \ty{UniformLabels} labels all nodes in the subtree with
+  ! a prefix followed by the node ID.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (v *Node) UniformLabels(pre string) {
+	  label(v, pre)
+  }
+#+end_src
+#+begin_src latex
+  We use the function \ty{label} to recursively label the nodes.
+#+end_src
+#+begin_src go <<Functions>>=
+  func label(v *Node, pre string) {
+	  if v == nil { return }
+	  label(v.Child, pre)
+	  label(v.Sib, pre)
+	  v.Label = pre + strconv.Itoa(v.Id)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{String}}
+  Apart from reading trees, we can write them by implementing the method
+  \ty{String} on \ty{Node}.
+  !\ty{String} turns a tree into its Newick string.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (n *Node) String() string {
+	  w := new(bytes.Buffer)
+	  writeTree(n, w)
+	  return w.String()
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{bytes}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "bytes"
+#+end_src
+#+begin_src latex
+  To convert our tree to Newick, we traverse it and ask four questions
+  about each node, $v$:
+  \begin{enumerate}
+  \item Is $v$ not a first child? Then it is delimited by a comma.
+  \item Is $v$ an internal node? Then it is a recursive structure in
+    parentheses.
+  \item Is $v$ the root? Then it is marked by a semicolon.
+  \end{enumerate}
+#+end_src
+#+begin_src go <<Functions>>=
+  func writeTree(v *Node, w *bytes.Buffer) {
+	  if v == nil {
+		  return
+	  }
+	  //<<Is $v$ not a first child?>>
+	  //<<Is $v$ an internal node?>>
+	  //<<Is $v$ the root?>>
+  }
+#+end_src
+#+begin_src latex
+  A child is not the first child, if its Id is different from that of
+  its parent's first child.
+#+end_src
+#+begin_src go <<Is $v$ not a first child?>>=
+  if v.Parent != nil && v.Parent.Child.Id != v.Id {
+	  fmt.Fprint(w, ",")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  If a node has no child, it is a leaf characterized by its
+  label. Since internal nodes are also labeled, we use a function here,
+  \ty{printLabel}. 
+#+end_src
+#+begin_src go <<Is $v$ a leaf?>>=
+  if v.Child == nil {
+	  printLabel(w, v)
+  }
+#+end_src
+#+begin_src latex
+  In \ty{printLabel}, we first clean up the label. Then we print it,
+  followed, perhaps, by the branch length. The root has no parent and
+  hence no branch length.
+#+end_src
+#+begin_src go <<Functions>>=
+  func printLabel(w *bytes.Buffer, v *Node) {
+	  label := v.Label
+	  //<<Clean up label>>
+	  fmt.Fprintf(w, "%s", label)
+	  if v.HasLength && v.Parent != nil {
+		  fmt.Fprintf(w, ":%.3g", v.Length)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  To clean up the label, we check whether it contains parentheses or
+  commas. In that case we convert single quotes to double single quotes
+  and print the label in single quotes. Otherwise, we convert blanks to
+  underscores and print an ordinary label.
+#+end_src
+#+begin_src go <<Clean up label>>=
+  if strings.IndexAny(label, "(),") != -1 {
+	  label = strings.ReplaceAll(label, "'", "''")
+	  label = fmt.Sprintf("'%s'", label)
+  } else {
+	  label = strings.ReplaceAll(label, " ", "_")
+  }
+#+end_src
+#+begin_src latex
+  If $v$ is an internal node, we place the subtree rooted on $v$ in
+  parentheses and print the subsequent label.
+#+end_src
+#+begin_src go <<Is $v$ an internal node?>>=
+  if v.Child != nil {
+	  fmt.Fprint(w, "(")
+  }
+  writeTree(v.Child, w)
+  printLabel(w, v)
+  writeTree(v.Sib, w)
+  if v.Parent != nil && v.Sib == nil {
+	  fmt.Fprint(w, ")")
+  }
+#+end_src
+#+begin_src latex
+  If $v$ is the root, we mark it by a semicolon.
+#+end_src
+#+begin_src go <<Is $v$ the root?>>=
+  if v.Parent == nil {
+	  fmt.Fprint(w, ";")
+  }
+#+end_src
+#+begin_src latex
+  \subsection{Data Structure \ty{Scanner}}
+  !\ty{Scanner} scans an input file one tree at a time.
+  We achieve this by wrapping the reader provided by the \ty{bufio}
+  package. The scanner has a hook for additional fields.
+#+end_src
+#+begin_src go <<Types>>=
+  type Scanner struct {
+	  r *bufio.Reader
+	  //<<Scanner fields>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{bufio}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "bufio"
+#+end_src
+#+begin_src latex
+  \subsubsection{Function \ty{NewScanner}}
+  ! \ty{NewScanner} returns a scanner for scanning Newick-formatted
+  ! phylogenies.
+#+end_src
+#+begin_src go <<Functions>>=
+  func NewScanner(r io.Reader) *Scanner {
+	  sc := new(Scanner)
+	  sc.r = bufio.NewReader(r)
+	  return sc
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "io"
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{Scan}}
+  !The method \ty{Scan} advances the scanner by one tree.
+  It wraps the \ty{bufio}  method \ty{ReadString}.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (s *Scanner) Scan() bool {
+	  var err error
+	  s.text, err = s.r.ReadString(';')
+	  if err == nil {
+		  return true
+	  }
+	  return false
+  }
+#+end_src
+#+begin_src latex
+  We add the scanner field \ty{text}.
+#+end_src
+#+begin_src go <<Scanner fields>>=
+  text string
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{Tree}}
+  !The method \ty{Tree} returns the most recent tree scanned.
+  It takes the text-version of a tree and
+  prepares it for scanning. Then it scans the string and constructs the
+  tree, which is returned by its root.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (s *Scanner) Tree() *Node {
+	  var root *Node
+	  var tokens []string
+	  tree := s.Text()
+	  //<<Prepare tree string for scanning>>
+	  //<<Convert tree string to tokens>>
+	  //<<Convert tokens to tree>>
+	  return root
+  }
+#+end_src
+#+begin_src latex
+  !The method \ty{Text} returns the text scanned most recently.
+  It wraps access to the \ty{text}
+  field.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (s *Scanner) Text() string {
+	  return s.text
+  }
+#+end_src
+#+begin_src latex
+  We scan the tree string using the token scanner from the standard
+  library. It is intended for tokenizing Go code, so we convert Newick
+  comments to Go comments, single quotes to double quotes, and we quote
+  numbers.
+#+end_src
+#+begin_src go <<Prepare tree string for scanning>>=
+  //<<Convert comments to Go comments>>
+  //<<Convert single quotes to double quotes>>
+  //<<Quote numbers>>
+#+end_src
+#+begin_src latex
+  We convert the square brackets of Newick comments to the corresponding
+  Go markers.
+#+end_src
+#+begin_src go <<Convert comments to Go comments>>=
+  tree = strings.ReplaceAll(tree, "[", "/*")
+  tree = strings.ReplaceAll(tree, "]", "*/")
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  We convert the single quotes to double quotes. And since literal
+  single quotes are marked by two single quotes in Newick, we convert
+  double-double quotes back to single quotes.
+#+end_src
+#+begin_src go <<Convert single quotes to double quotes>>=
+  tree = strings.ReplaceAll(tree, "'", "\"")
+  tree = strings.ReplaceAll(tree, "\"\"", "'")
+#+end_src
+#+begin_src latex
+  To quote numbers, we convert the tree into a slice of runes and
+  iterate over them. For each rune we decide whether it is part of a
+  number or not.
+#+end_src
+#+begin_src go <<Quote numbers>>=
+  c1 := []rune(tree)
+  var c2 []rune
+  isNum := false
+  for _, r := range c1 {
+	  //<<Is number?>>
+	  c2 = append(c2, r)
+  }
+  tree = string(c2)
+#+end_src
+#+begin_src latex
+  Numbers start with a colon and end with a right parenthesis or a
+  comma. If the user gave the root a branch length, a number might also
+  be terminated by a semicolon. We include the starting colon in the
+  number string to make it easier later on to distinguish between branch
+  lengths and node labels.
+#+end_src
+#+begin_src go <<Is number?>>=
+  if r == ':' {
+	  isNum = true
+	  c2 = append(c2, '"')
+  }
+  if isNum && (r == ',' || r == ';' || r == ' ' || r == ')') {
+	  isNum = false
+	  c2 = append(c2, '"')
+  }
+#+end_src
+#+begin_src latex
+  The tree string is now ready to be split into its syntactic tokens.
+  Some of these tokes come with enclosing quotes, which we remove. The
+  other tokens might be ordinary labels, where we convert underscores to
+  blanks.
+#+end_src
+#+begin_src go <<Convert tree string to tokens>>=
+  var tsc scanner.Scanner
+  tsc.Init(strings.NewReader(tree))
+  for t := tsc.Scan(); t != scanner.EOF;  t = tsc.Scan() {
+	  text := tsc.TokenText()
+	  if text[0] == '"' {
+		  //<<Unquote token>>
+	  } else {
+		  //<<Convert underscores to blanks>>
+	  }
+	  tokens = append(tokens, text)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{scanner}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "text/scanner"
+#+end_src
+#+begin_src latex
+  We unquote the token and check for errors.
+#+end_src
+#+begin_src go <<Unquote token>>=
+  var err error
+  text, err = strconv.Unquote(text)
+  if err != nil {
+	  log.Fatalf("couldn't unquote %q\n", text)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv} and \ty{log}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "strconv"
+  "log"
+#+end_src
+#+begin_src latex
+  We convert all underscores to blanks.
+#+end_src
+#+begin_src go <<Convert underscores to blanks>>=
+  text = strings.ReplaceAll(text, "_", " ")
+#+end_src
+#+begin_src latex
+  We iterate across the tokens and classify them into tree elements.
+#+end_src
+#+begin_src go <<Convert tokens to tree>>=
+  i := 0
+  v := root
+  for i < len(tokens) {
+	  t := tokens[i]
+	  //<<Classify token>>
+	  i++
+  }
+  root = v
+#+end_src
+#+begin_src latex
+  There are five syntactic tokens, left and right parenthesis, comma,
+  colon, and semicolon. They each cause an operation on the tree:
+  \begin{center}
+    \begin{tabular}{cl}
+      \hline
+      Token & Action\\\hline
+      ( & Add child\\
+      ) & Move to parent\\
+      , & Add sibling\\
+      : & Add branch length\\
+      ; & Break from loop and return tree\\\hline
+    \end{tabular}
+  \end{center}
+  If none of these apply, the token is a node label.
+#+end_src
+#+begin_src go <<Classify token>>=
+  //<<Add child?>>
+  //<<Move to parent?>>
+  //<<Add sibling?>>
+  //<<Add branch length?>>
+  //<<Tree finished?>>
+  //<<Add label?>>
+#+end_src
+#+begin_src latex
+  On a left parenthesis we add a child to our current node and
+  move to it. If the current node is nil, we initialize it first.
+#+end_src
+#+begin_src go <<Add child?>>=
+  if t == "(" {
+	  if v == nil {
+		  v = NewNode()
+	  }
+	  v.AddChild(NewNode())
+	  v = v.Child
+  }
+#+end_src
+#+begin_src latex
+  On a right parenthesis we move to the parent.
+#+end_src
+#+begin_src go <<Move to parent?>>=
+  if t == ")" {
+	  v = v.Parent
+  }
+#+end_src
+#+begin_src latex
+  On a comma, we add a sibling with the same parent as the current node
+  and move to it.
+#+end_src
+#+begin_src go <<Add sibling?>>=
+  if t == "," {
+	  s := NewNode()
+	  s.Parent = v.Parent
+	  v.Sib = s
+	  v = v.Sib
+  }
+#+end_src
+#+begin_src latex
+  On a leading colon we add a branch length.
+#+end_src
+#+begin_src go <<Add branch length?>>=
+  if t[0] == ':' {
+	  l, err := strconv.ParseFloat(t[1:], 64)
+	  if err != nil {
+		  log.Fatalf("didn't understand %q\n", t[1:])
+	  }
+	  v.Length = l
+	  v.HasLength = true
+  }
+#+end_src
+#+begin_src latex
+  On a semicolon the tree is finished and we break from the loop.
+#+end_src
+#+begin_src go <<Tree finished?>>=
+  if t == ";" {
+	  break
+  }
+#+end_src
+#+begin_src latex
+  If none of the above, add a label.
+#+end_src
+#+begin_src go <<Add label?>>=
+  if strings.IndexAny(t[:1], ")(,:;") == -1 {
+	  v.Label = t
+  }
+#+end_src
+#+begin_src latex
+  The package is finished, time to test it.
+#+end_src
