@@ -95,7 +95,7 @@
 
 #+begin_src latex
   \subsection{Data Structure \ty{Node}}
-  !A \ty{Node} is the basic uni of a Newick tree.
+  !A \ty{Node} is the basic unit of a Newick tree.
   It holds an Id, references to parent, child, and sibling, a label,
   a branch length, and an indicator whether it does have a branch
   length. The indicator distinguishes the default length of zero from a

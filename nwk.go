@@ -13,7 +13,7 @@ import (
 	"text/scanner"
 )
 
-// A Node is the basic uni of a Newick tree.
+// A Node is the basic unit of a Newick tree.
 type Node struct {
 	Id                 int
 	Child, Sib, Parent *Node
