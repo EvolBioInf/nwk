@@ -109,6 +109,15 @@ func (n *Node) String() string {
 	return w.String()
 }
 
+//  Method Print prints nodes indented to form a tree. The code is  taken from Sedgewick, R. (1998). Algorithms in C, Parts 1-4. 3rd  Edition, p. 237.
+func (v *Node) Print() string {
+	h := 0
+	var b []byte
+	buf := bytes.NewBuffer(b)
+	show(v, h, buf)
+	return buf.String()
+}
+
 // The method Scan advances the scanner by one tree.
 func (s *Scanner) Scan() bool {
 	var err error
@@ -262,6 +271,23 @@ func printLabel(w *bytes.Buffer, v *Node) {
 	if v.HasLength && v.Parent != nil {
 		fmt.Fprintf(w, ":%.3g", v.Length)
 	}
+}
+func show(v *Node, h int, b *bytes.Buffer) {
+	if v == nil {
+		return
+	}
+	show(v.Sib, h, b)
+	printNode(v.Label, h, b)
+	show(v.Child, h+1, b)
+}
+func printNode(l string, h int, b *bytes.Buffer) {
+	for i := 0; i < h; i++ {
+		fmt.Fprintf(b, "   ")
+	}
+	if len(l) == 0 {
+		l = "*"
+	}
+	fmt.Fprintf(b, "%s\n", l)
 }
 
 //  NewScanner returns a scanner for scanning Newick-formatted  phylogenies.

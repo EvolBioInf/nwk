@@ -420,6 +420,45 @@
   }
 #+end_src
 #+begin_src latex
+  \subsubsection{Method \ty{Print}}
+  ! Method \ty{Print} prints nodes indented to form a tree. The code is
+  ! taken from Sedgewick, R. (1998). Algorithms in C, Parts 1-4. 3rd
+  ! Edition, p. 237.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (v *Node) Print() string {
+	  h := 0
+	  var b []byte
+	  buf := bytes.NewBuffer(b)
+	  show(v, h, buf)
+	  return buf.String()
+  }
+#+end_src
+#+begin_src latex
+  We recursively traverse the tree in the function \ty{show}.
+#+end_src
+#+begin_src go <<Functions>>=
+  func show(v *Node, h int, b *bytes.Buffer) {
+	  if v == nil { return }
+	  show(v.Sib, h, b)
+	  printNode(v.Label, h, b)
+	  show(v.Child, h+1, b)
+  }
+#+end_src
+#+begin_src latex
+  The function \ty{printNode} takes care of the correct indentation. If
+  a node has no label, we print it as an asterisk.
+#+end_src
+#+begin_src go <<Functions>>=
+  func printNode(l string, h int, b *bytes.Buffer) {
+	  for i := 0; i < h; i++ {
+		  fmt.Fprintf(b, "   ")
+	  }
+	  if len(l) == 0 { l = "*" }
+	  fmt.Fprintf(b, "%s\n", l)
+  }
+#+end_src
+#+begin_src latex
   \subsection{Data Structure \ty{Scanner}}
   !\ty{Scanner} scans an input file one tree at a time.
   We achieve this by wrapping the reader provided by the \ty{bufio}
