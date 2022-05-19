@@ -397,6 +397,12 @@
   }
 #+end_src
 #+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "strings"
+#+end_src
+#+begin_src latex
   If $v$ is an internal node, we place the subtree rooted on $v$ in
   parentheses and print the subsequent label.
 #+end_src
@@ -456,6 +462,34 @@
 	  }
 	  if len(l) == 0 { l = "*" }
 	  fmt.Fprintf(b, "%s\n", l)
+  }
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{Key}}
+  ! Method \ty{Key} returns a string key for the nodes rooted on its
+  ! receiver. The key consists of the sorted, concatenated labels of the
+  ! nodes in the subtree. The labeles are joined on a separator supplied
+  ! by the caller.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (v *Node) Key(sep string) string {
+	  var keys []string
+	  keys = collectLabels(v, keys)
+	  key := strings.Join(keys, sep)
+	  return key
+  }
+#+end_src
+#+begin_src latex
+  The function \ty{collectLabels} iterates over the tree and collects
+  the labels in a string slice.
+#+end_src
+#+begin_src go <<Functions>>=
+  func collectLabels(v *Node, labels []string) []string {
+	  if v == nil { return labels }
+	  labels = append(labels, v.Label)
+	  labels = collectLabels(v.Child, labels)
+	  labels = collectLabels(v.Sib, labels)
+	  return labels
   }
 #+end_src
 #+begin_src latex
@@ -561,12 +595,6 @@
 #+begin_src go <<Convert comments to Go comments>>=
   tree = strings.ReplaceAll(tree, "[", "/*")
   tree = strings.ReplaceAll(tree, "]", "*/")
-#+end_src
-#+begin_src latex
-  We import \ty{strings}.
-#+end_src
-#+begin_src go <<Imports>>=
-  "strings"
 #+end_src
 #+begin_src latex
   We convert the single quotes to double quotes. And since literal

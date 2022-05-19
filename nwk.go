@@ -118,6 +118,14 @@ func (v *Node) Print() string {
 	return buf.String()
 }
 
+//  Method Key returns a string key for the nodes rooted on its  receiver. The key consists of the sorted, concatenated labels of the  nodes in the subtree. The labeles are joined on a separator supplied  by the caller.
+func (v *Node) Key(sep string) string {
+	var keys []string
+	keys = collectLabels(v, keys)
+	key := strings.Join(keys, sep)
+	return key
+}
+
 // The method Scan advances the scanner by one tree.
 func (s *Scanner) Scan() bool {
 	var err error
@@ -288,6 +296,15 @@ func printNode(l string, h int, b *bytes.Buffer) {
 		l = "*"
 	}
 	fmt.Fprintf(b, "%s\n", l)
+}
+func collectLabels(v *Node, labels []string) []string {
+	if v == nil {
+		return labels
+	}
+	labels = append(labels, v.Label)
+	labels = collectLabels(v.Child, labels)
+	labels = collectLabels(v.Sib, labels)
+	return labels
 }
 
 //  NewScanner returns a scanner for scanning Newick-formatted  phylogenies.

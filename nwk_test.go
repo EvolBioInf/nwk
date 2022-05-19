@@ -67,4 +67,9 @@ func TestNewick(t *testing.T) {
 	if get != want {
 		t.Errorf("get:\n%s\nwant:\n%s", get, want)
 	}
+	want = "n10$n11$n12$n13$n14$n15$n16$n17$n18"
+	get = root.Key("$")
+	if get != want {
+		t.Errorf("get:\n%s\nwant:\n%s", get, want)
+	}
 }
