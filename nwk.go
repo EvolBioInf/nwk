@@ -301,7 +301,9 @@ func collectLabels(v *Node, labels []string) []string {
 	if v == nil {
 		return labels
 	}
-	labels = append(labels, v.Label)
+	if v.Label != "" {
+		labels = append(labels, v.Label)
+	}
 	labels = collectLabels(v.Child, labels)
 	labels = collectLabels(v.Sib, labels)
 	return labels

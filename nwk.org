@@ -481,12 +481,14 @@
 #+end_src
 #+begin_src latex
   The function \ty{collectLabels} iterates over the tree and collects
-  the labels in a string slice.
+  the non-empty labels in a string slice.
 #+end_src
 #+begin_src go <<Functions>>=
   func collectLabels(v *Node, labels []string) []string {
 	  if v == nil { return labels }
-	  labels = append(labels, v.Label)
+	  if v.Label != "" {
+		  labels = append(labels, v.Label)
+	  }
 	  labels = collectLabels(v.Child, labels)
 	  labels = collectLabels(v.Sib, labels)
 	  return labels
