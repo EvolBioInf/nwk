@@ -473,25 +473,36 @@
 #+end_src
 #+begin_src go <<Methods>>=
   func (v *Node) Key(sep string) string {
+	  labels := make(map[string]bool)
+	  if v.Label != "" { labels[v.Label] = true }
+	  collectLabels(v.Child, labels)
 	  var keys []string
-	  keys = collectLabels(v, keys)
+	  for k, _ := range labels {
+		  keys = append(keys, k)
+	  }
+	  sort.Strings(keys)
 	  key := strings.Join(keys, sep)
 	  return key
   }
 #+end_src
 #+begin_src latex
+  We import \ty{sort}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "sort"
+#+end_src
+#+begin_src latex
   The function \ty{collectLabels} iterates over the tree and collects
-  the non-empty labels in a string slice.
+  the non-empty labels in a map.
 #+end_src
 #+begin_src go <<Functions>>=
-  func collectLabels(v *Node, labels []string) []string {
-	  if v == nil { return labels }
+  func collectLabels(v *Node, labels map[string]bool) {
+	  if v == nil { return }
 	  if v.Label != "" {
-		  labels = append(labels, v.Label)
+		  labels[v.Label] = true
 	  }
-	  labels = collectLabels(v.Child, labels)
-	  labels = collectLabels(v.Sib, labels)
-	  return labels
+	  collectLabels(v.Child, labels)
+	  collectLabels(v.Sib, labels)
   }
 #+end_src
 #+begin_src latex
