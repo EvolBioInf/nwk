@@ -278,7 +278,7 @@ func writeTree(v *Node, w *bytes.Buffer) {
 }
 func printLabel(w *bytes.Buffer, v *Node) {
 	label := v.Label
-	if strings.IndexAny(label, "(),") != -1 {
+	if strings.IndexAny(label, "(),.") != -1 {
 		label = strings.ReplaceAll(label, "'", "''")
 		label = fmt.Sprintf("'%s'", label)
 	} else {

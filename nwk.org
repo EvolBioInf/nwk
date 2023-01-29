@@ -383,13 +383,13 @@
   }
 #+end_src
 #+begin_src latex
-  To clean up the label, we check whether it contains parentheses or
-  commas. In that case we convert single quotes to double single quotes
-  and print the label in single quotes. Otherwise, we convert blanks to
-  underscores and print an ordinary label.
+  To clean up the label, we check whether it contains parentheses,
+  commas, or full stops. In that case we convert single quotes to double
+  single quotes and print the label in single quotes. Otherwise, we
+  convert blanks to underscores and print an ordinary label.
 #+end_src
 #+begin_src go <<Clean up label>>=
-  if strings.IndexAny(label, "(),") != -1 {
+  if strings.IndexAny(label, "(),.") != -1 {
 	  label = strings.ReplaceAll(label, "'", "''")
 	  label = fmt.Sprintf("'%s'", label)
   } else {
