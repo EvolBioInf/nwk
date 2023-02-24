@@ -790,11 +790,12 @@
   }
 #+end_src
 #+begin_src latex
-  If none of the above, add a label.
+  If none of the above, we are dealing with part of a label, if not the
+  full label.
 #+end_src
 #+begin_src go <<Add label?>>=
   if strings.IndexAny(t[:1], ")(,:;") == -1 {
-	  v.Label = t
+	  v.Label += t
   }
 #+end_src
 #+begin_src latex

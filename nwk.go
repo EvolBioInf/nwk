@@ -216,7 +216,7 @@ func (s *Scanner) Tree() *Node {
 			break
 		}
 		if strings.IndexAny(t[:1], ")(,:;") == -1 {
-			v.Label = t
+			v.Label += t
 		}
 		i++
 	}
