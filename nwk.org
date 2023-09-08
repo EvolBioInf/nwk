@@ -543,18 +543,34 @@
 #+end_src
 #+begin_src latex
   \subsubsection{Method \ty{Scan}}
-  !The method \ty{Scan} advances the scanner by one tree.
-  It wraps the \ty{bufio}  method \ty{ReadString}.
+  !The method \ty{Scan} advances the scanner by one tree. A tree starts
+  !at the first opening parenthesis encountered and ends at the next
+  !semi colon.
+  \ty{Scan} wraps the \ty{bufio}  method \ty{ReadString}.
 #+end_src
 #+begin_src go <<Methods>>=
   func (s *Scanner) Scan() bool {
 	  var err error
-	  s.text, err = s.r.ReadString(';')
-	  if err == nil {
-		  return true
+	  text, err := s.r.ReadString(';')
+	  if err != nil {
+		  return false
 	  }
+	  //<<Remove extraneous prefix>>
+	  s.text = text
+	  return true
+  }
+#+end_src
+#+begin_src latex
+  Any character to the left of the first opening parenthesis must be
+  superfluous and is removed. If there is no opening parenthesis, we
+  report that there's no tree.
+#+end_src
+#+begin_src go <<Remove extraneous prefix>>=
+  i := strings.Index(text, "(")
+  if i == -1 {
 	  return false
   }
+  text = text[i:]
 #+end_src
 #+begin_src latex
   We add the scanner field \ty{text}.

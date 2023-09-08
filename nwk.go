@@ -135,14 +135,20 @@ func (v *Node) Key(sep string) string {
 	return key
 }
 
-// The method Scan advances the scanner by one tree.
+// The method Scan advances the scanner by one tree. A tree starts at the first opening parenthesis encountered and ends at the next semi colon.
 func (s *Scanner) Scan() bool {
 	var err error
-	s.text, err = s.r.ReadString(';')
-	if err == nil {
-		return true
+	text, err := s.r.ReadString(';')
+	if err != nil {
+		return false
 	}
-	return false
+	i := strings.Index(text, "(")
+	if i == -1 {
+		return false
+	}
+	text = text[i:]
+	s.text = text
+	return true
 }
 
 // The method Tree returns the most recent tree scanned.
