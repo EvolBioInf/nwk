@@ -157,8 +157,8 @@
 #+end_src
 #+begin_src latex
   \subsubsection{Method \ty{RemoveChild}}
-  ! The method \ty{RemoveChild} removes a direct child node, if
-  ! present. If not, it returns an error.
+  !The method \ty{RemoveChild} removes a direct child node, if
+  !present. If not, it returns an error.
 #+end_src
 #+begin_src go <<Methods>>=
   func (v *Node) RemoveChild(c *Node) error {
@@ -503,6 +503,135 @@
 	  }
 	  collectLabels(v.Child, labels)
 	  collectLabels(v.Sib, labels)
+  }
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{RemoveClade}}
+  !The method \ty{RemoveClade} removes the clade rooted on the node on
+  !which it is called and sets that node to nil.
+
+  We begin by checking $v$, the node on which \ty{RemoveClade} is
+  called, the root of the clade we wish to remove. Then we check the
+  parent of $v$, $p$. Then we check the child of $p$, and finally we
+  check the siblings of $v$.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (v *Node) RemoveClade() {
+	  //<<Check $v$>>
+	  //<<Check parent of $v$, $p$>>
+	  //<<Check child of $p$>>
+	  //<<Check siblings of $v$>>
+  }
+#+end_src
+#+begin_src latex
+  If $v$ is nil, there's nothing to be removed and we return.
+#+end_src
+#+begin_src go <<Check $v$>>=
+  if v == nil {
+	  return
+  }
+#+end_src
+#+begin_src latex
+  If the parent of $v$ is nil, $v$ is the root and we remove the
+  clade by setting $v$ to nil before we return.
+#+end_src
+#+begin_src go <<Check parent of $v$, $p$>>=
+  p := v.Parent
+  if p == nil {
+	  v = nil
+	  return
+  }
+#+end_src
+#+begin_src latex
+  If $v$ is the direct child of $p$, we reset the child link of $p$, set
+  the child nil and return.
+#+end_src
+#+begin_src go <<Check child of $p$>>=
+  w := p.Child
+  if w.Id == v.Id {
+	  p.Child = w.Sib
+	  v = nil
+	  return
+  }
+#+end_src
+#+begin_src latex
+  Now we walk along the siblings of $v$ until we find a node $w$ whose
+  sibling link points to $v$. Then we reset the sibling link of $w$ to
+  the sibling of $v$ and set $v$ nil.
+#+end_src
+#+begin_src go <<Check siblings of $v$>>=
+  for w.Sib != nil && w.Sib.Id != v.Id {
+	  w = w.Sib
+  }
+  w.Sib = w.Sib.Sib
+  v = nil
+#+end_src
+#+begin_src latex
+  \subsubsection{Method \ty{CopyClade}}
+  !The method \ty{CopyClade} copies the clade rooted on the node on
+  !which it is called and returns a copy of the root of the new clade.
+
+  We copying the root using the function \ty{copyNode} before we copy
+  the rest of the tree using the function \ty{copyTree}.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (v *Node) CopyClade() *Node {
+	  w := copyNode(v)
+	  w = copyTree(v, w)
+	  return w
+  }
+#+end_src
+#+begin_src latex
+  The function \ty{copyNode} takes as argument a node, $a$, which we
+  copy to $b$ before returning $b$.
+#+end_src
+#+begin_src go <<Functions>>=
+  func copyNode(a *Node) *Node {
+	  if a == nil {
+		  return a
+	  }
+	  b := NewNode()
+	  b.Label = a.Label
+	  b.Length = a.Length
+	  b.HasLength = a.HasLength
+	  b.marked = a.marked
+	  return b
+  }
+#+end_src
+#+begin_src latex
+  The function \ty{copyTree} takes as input a node to be copied, $a$,
+  and the parent of the copy, $p$. It then copies $a$ into $b$ and sets
+  $b$'s parent, unless $a$ is the root, in which case $b$'s parent
+  remains the default nil. Then we copy the child of $a$ and its
+  sibling.
+#+end_src
+#+begin_src go <<Functions>>=
+  func copyTree(a, p *Node) *Node {
+	  b := copyNode(a)
+	  if a.Parent != nil {
+		  b.Parent = p
+	  }
+	  //<<Copy child>>
+	  //<<Copy sibling>>
+	  return b
+  }
+#+end_src
+#+begin_src latex
+  If $a$ has a child, we copy it to the child of $b$ and pass $b$ as the
+  parent.
+#+end_src
+#+begin_src go <<Copy child>>=
+  if a.Child != nil {
+	  b.Child = copyTree(a.Child, b)
+  }
+#+end_src
+#+begin_src latex
+  Similarly, if $a$ has a sibling, we copy it to the sibling of $b$ and
+  pass $b$'s parent as the parent.
+#+end_src
+#+begin_src go <<Copy sibling>>=
+  if a.Sib != nil {
+	  b.Sib = copyTree(a.Sib, b.Parent)
   }
 #+end_src
 #+begin_src latex

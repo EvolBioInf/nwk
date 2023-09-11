@@ -6,7 +6,7 @@ import (
 )
 
 func TestNewick(t *testing.T) {
-	in := "test.nwk"
+	in := "test1.nwk"
 	f, err := os.Open(in)
 	if err != nil {
 		t.Errorf("couldn't open %q", in)
@@ -23,11 +23,16 @@ func TestNewick(t *testing.T) {
 				get, want)
 		}
 	}
+	root2 := root.CopyClade()
+	get := root2.String()
+	if get != want {
+		t.Errorf("get:\n%s\nwant\n%s\n", get, want)
+	}
 	root.UniformLabels("n")
 	want = `(((n13:0.2,n14:0.3)n12:0.3,` +
 		`(n16:0.5,n17:0.3)n15:0.2)n11` +
 		`:0.3,n18:0.7)n10;`
-	get := root.String()
+	get = root.String()
 	if get != want {
 		t.Errorf("get:\n%s\nwant:\n%s",
 			get, want)
@@ -63,7 +68,8 @@ func TestNewick(t *testing.T) {
 	}
 	get = root.Print()
 	want = "n10\n   n18\n   n11\n      n15\n         n17\n" +
-		"         n16\n      n12\n         n14\n         n13\n"
+		"         n16\n      n12\n         n14\n" +
+		"         n13\n"
 	if get != want {
 		t.Errorf("get:\n%s\nwant:\n%s", get, want)
 	}
@@ -71,5 +77,32 @@ func TestNewick(t *testing.T) {
 	get = root.Key("$")
 	if get != want {
 		t.Errorf("get:\n%s\nwant:\n%s", get, want)
+	}
+	in = "test2.nwk"
+	f, err = os.Open(in)
+	if err != nil {
+		t.Errorf("couldn't open %q", in)
+	}
+	defer f.Close()
+	sc = NewScanner(f)
+	sc.Scan()
+	origRoot := sc.Tree()
+	copyRoot := origRoot.CopyClade()
+	want = `((T1:47)4:1,((T6:15,T7:11)5:20,` +
+		`((T8:34,T9:37)6:3,T10:41)7:2)8:4)9;`
+	v := copyRoot.Child.Child.Sib
+	v.RemoveClade()
+	get = copyRoot.String()
+	if get != want {
+		t.Errorf("get\n%s\nwant:\n%s\n", get, want)
+	}
+	want = `((T1:47,(T5:31)3:10)4:1,((T6:15,T7:11)5:20,` +
+		`((T8:34,T9:37)6:3,T10:41)7:2)8:4)9;`
+	copyRoot = origRoot.CopyClade()
+	v = copyRoot.Child.Child.Sib.Child
+	v.RemoveClade()
+	get = copyRoot.String()
+	if get != want {
+		t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
 	}
 }

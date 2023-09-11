@@ -46,7 +46,7 @@ func (n *Node) AddChild(v *Node) {
 	}
 }
 
-//  The method RemoveChild removes a direct child node, if  present. If not, it returns an error.
+// The method RemoveChild removes a direct child node, if present. If not, it returns an error.
 func (v *Node) RemoveChild(c *Node) error {
 	if v.Child == nil {
 		return errors.New("no children")
@@ -133,6 +133,36 @@ func (v *Node) Key(sep string) string {
 	sort.Strings(keys)
 	key := strings.Join(keys, sep)
 	return key
+}
+
+// The method RemoveClade removes the clade rooted on the node on which it is called and sets that node to nil.
+func (v *Node) RemoveClade() {
+	if v == nil {
+		return
+	}
+	p := v.Parent
+	if p == nil {
+		v = nil
+		return
+	}
+	w := p.Child
+	if w.Id == v.Id {
+		p.Child = w.Sib
+		v = nil
+		return
+	}
+	for w.Sib != nil && w.Sib.Id != v.Id {
+		w = w.Sib
+	}
+	w.Sib = w.Sib.Sib
+	v = nil
+}
+
+// The method CopyClade copies the clade rooted on the node on which it is called and returns a copy of the root of the new clade.
+func (v *Node) CopyClade() *Node {
+	w := copyNode(v)
+	w = copyTree(v, w)
+	return w
 }
 
 // The method Scan advances the scanner by one tree. A tree starts at the first opening parenthesis encountered and ends at the next semi colon.
@@ -321,6 +351,30 @@ func collectLabels(v *Node, labels map[string]bool) {
 	}
 	collectLabels(v.Child, labels)
 	collectLabels(v.Sib, labels)
+}
+func copyNode(a *Node) *Node {
+	if a == nil {
+		return a
+	}
+	b := NewNode()
+	b.Label = a.Label
+	b.Length = a.Length
+	b.HasLength = a.HasLength
+	b.marked = a.marked
+	return b
+}
+func copyTree(a, p *Node) *Node {
+	b := copyNode(a)
+	if a.Parent != nil {
+		b.Parent = p
+	}
+	if a.Child != nil {
+		b.Child = copyTree(a.Child, b)
+	}
+	if a.Sib != nil {
+		b.Sib = copyTree(a.Sib, b.Parent)
+	}
+	return b
 }
 
 //  NewScanner returns a scanner for scanning Newick-formatted  phylogenies.
