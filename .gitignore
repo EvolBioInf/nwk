@@ -1,3 +1,4 @@
+*~
 doc/*.aux
 doc/*.dvi
 doc/*.log
@@ -6,5 +7,7 @@ doc/*.toc
 doc/*.bbl
 doc/*.blg
 doc/*.out
+doc/date.txt
 doc/nwk_test.tex
 doc/nwk.tex
+doc/version.txt
