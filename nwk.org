@@ -635,6 +635,21 @@
   }
 #+end_src
 #+begin_src latex
+  \subsubsection{Method \ty{Degree}}
+  !The method \ty{Degree} returns the number of children.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (v *Node) Degree() int {
+	  c := 0
+	  w := v.Child
+	  for w != nil {
+		  c++
+		  w = w.Sib
+	  }
+	  return c
+  }
+#+end_src
+#+begin_src latex
   \subsection{Data Structure \ty{Scanner}}
   !\ty{Scanner} scans an input file one tree at a time.
   We achieve this by wrapping the reader provided by the \ty{bufio}

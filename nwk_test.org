@@ -222,3 +222,14 @@
 	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
   }
 #+end_src
+#+begin_export latex
+To test \ty{Degree}, we calculate the degree of the original root,
+which we know to be 2.
+#+end_export
+#+begin_src go <<Testing>>=
+  g := origRoot.Degree()
+  w := 2
+  if g != w {
+	  t.Errorf("get:\n%d\nwant:\n%d\n", g, w)
+  }
+#+end_src

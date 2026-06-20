@@ -84,7 +84,7 @@ func (v *Node) LCA(w *Node) *Node {
 	return w
 }
 
-//  The method UpDistance returns the distance between the node  and one of its ancestors.
+// The method UpDistance returns the distance between the node  and one of its ancestors.
 func (v *Node) UpDistance(w *Node) float64 {
 	s := 0.0
 	x := v
@@ -98,7 +98,7 @@ func (v *Node) UpDistance(w *Node) float64 {
 	return s
 }
 
-//  The method UniformLabels labels all nodes in the subtree with  a prefix followed by the node ID.
+// The method UniformLabels labels all nodes in the subtree with  a prefix followed by the node ID.
 func (v *Node) UniformLabels(pre string) {
 	label(v, pre)
 }
@@ -110,7 +110,7 @@ func (n *Node) String() string {
 	return w.String()
 }
 
-//  Method Print prints nodes indented to form a tree. The code is  taken from Sedgewick, R. (1998). Algorithms in C, Parts 1-4. 3rd  Edition, p. 237.
+// Method Print prints nodes indented to form a tree. The code is  taken from Sedgewick, R. (1998). Algorithms in C, Parts 1-4. 3rd  Edition, p. 237.
 func (v *Node) Print() string {
 	h := 0
 	var b []byte
@@ -119,7 +119,7 @@ func (v *Node) Print() string {
 	return buf.String()
 }
 
-//  Method Key returns a string key for the nodes rooted on its  receiver. The key consists of the sorted, concatenated labels of the  nodes in the subtree. The labeles are joined on a separator supplied  by the caller.
+// Method Key returns a string key for the nodes rooted on its  receiver. The key consists of the sorted, concatenated labels of the  nodes in the subtree. The labeles are joined on a separator supplied  by the caller.
 func (v *Node) Key(sep string) string {
 	labels := make(map[string]bool)
 	if v.Label != "" {
@@ -163,6 +163,17 @@ func (v *Node) CopyClade() *Node {
 	w := copyNode(v)
 	w = copyTree(v, w)
 	return w
+}
+
+// The method Degree returns the number of children.
+func (v *Node) Degree() int {
+	c := 0
+	w := v.Child
+	for w != nil {
+		c++
+		w = w.Sib
+	}
+	return c
 }
 
 // The method Scan advances the scanner by one tree. A tree starts at the first opening parenthesis encountered and ends at the next semi colon.
@@ -377,7 +388,7 @@ func copyTree(a, p *Node) *Node {
 	return b
 }
 
-//  NewScanner returns a scanner for scanning Newick-formatted  phylogenies.
+// NewScanner returns a scanner for scanning Newick-formatted  phylogenies.
 func NewScanner(r io.Reader) *Scanner {
 	sc := new(Scanner)
 	sc.r = bufio.NewReader(r)

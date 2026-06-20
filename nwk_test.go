@@ -105,4 +105,9 @@ func TestNewick(t *testing.T) {
 	if get != want {
 		t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
 	}
+	g := origRoot.Degree()
+	w := 2
+	if g != w {
+		t.Errorf("get:\n%d\nwant:\n%d\n", g, w)
+	}
 }
